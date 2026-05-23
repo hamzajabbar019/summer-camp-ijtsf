@@ -36,178 +36,313 @@ function drawRoundedRect(
   ctx.closePath();
 }
 
-function drawPass(canvas: HTMLCanvasElement, data: EntryPassProps & { passId: string }, logoImg: HTMLImageElement | undefined) {
+function drawPass(canvas: HTMLCanvasElement, data: EntryPassProps & { passId: string }, logoImg: HTMLImageElement | undefined, qrImg: HTMLImageElement | undefined) {
   const ctx = canvas.getContext("2d")!;
-  const W = 900;
-  const H = 520;
+  const W = 1000;
+  const H = 600;
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
 
-  // --- Card background with gradient ---
+  // --- Card background with light gradient (like poster) ---
   const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "#0284c7");   // sky-600
-  grad.addColorStop(0.5, "#0369a1"); // sky-700
-  grad.addColorStop(1, "#075985");   // sky-800
-  drawRoundedRect(ctx, 0, 0, W, H, 32);
+  grad.addColorStop(0, "#e8f4f8");   // very light blue
+  grad.addColorStop(0.5, "#f0f7fa"); // lighter
+  grad.addColorStop(1, "#e0eef5");   // light blue-gray
+  drawRoundedRect(ctx, 0, 0, W, H, 40);
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // --- Decorative circles ---
-  ctx.globalAlpha = 0.07;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath(); ctx.arc(W - 80, 80, 160, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(120, H - 60, 120, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(W / 2, -40, 100, 0, Math.PI * 2); ctx.fill();
+  // --- Mountain silhouette at bottom (like poster) ---
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#1e3a8a"; // dark blue
+  
+  // Draw layered mountains
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  ctx.lineTo(0, H - 120);
+  for (let i = 0; i < 15; i++) {
+    const x = i * 70;
+    const peakHeight = H - 120 - Math.random() * 60;
+    ctx.lineTo(x, peakHeight);
+    ctx.lineTo(x + 35, H - 100);
+  }
+  ctx.lineTo(W - 220, H);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Draw trees silhouette
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 20; i++) {
+    const x = i * 50 + Math.random() * 20;
+    const treeHeight = 40 + Math.random() * 30;
+    ctx.beginPath();
+    ctx.moveTo(x, H);
+    ctx.lineTo(x + 5, H - treeHeight);
+    ctx.lineTo(x + 10, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // --- Decorative dots pattern (top left) ---
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#84cc16"; // lime green
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      ctx.beginPath();
+      ctx.arc(35 + col * 14, 35 + row * 14, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.globalAlpha = 1;
 
+  // --- Decorative wave/curve (left side) ---
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = "#84cc16";
+  ctx.beginPath();
+  ctx.moveTo(0, 180);
+  ctx.quadraticCurveTo(60, 230, 35, 290);
+  ctx.quadraticCurveTo(15, 350, 45, 410);
+  ctx.lineTo(0, 410);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
   // --- Dotted tear line ---
-  ctx.setLineDash([8, 8]);
-  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.setLineDash([10, 10]);
+  ctx.strokeStyle = "rgba(100,116,139,0.25)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(W - 200, 30);
-  ctx.lineTo(W - 200, H - 30);
+  ctx.moveTo(W - 220, 40);
+  ctx.lineTo(W - 220, H - 40);
   ctx.stroke();
   ctx.setLineDash([]);
 
   // --- Left section (main info) ---
-  // Title
+  // Torch logo (top left) - draw or use image
+  const torchX = 50;
+  const torchY = 60;
+  
   if (logoImg) {
-    // Draw white rounded background for logo
-    drawRoundedRect(ctx, 50, 40, 60, 60, 12);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-    // Draw the logo image
+    // Draw the actual logo image
     ctx.save();
-    ctx.beginPath();
-    drawRoundedRect(ctx, 52, 42, 56, 56, 10);
-    ctx.clip();
-    ctx.drawImage(logoImg, 52, 42, 56, 56);
+    ctx.drawImage(logoImg, torchX, torchY, 70, 70);
     ctx.restore();
-
-    ctx.fillStyle = "#fbbf24"; // yellow-400
-    ctx.font = "bold 14px 'Fredoka', sans-serif";
-    ctx.letterSpacing = "6px";
-    ctx.fillText("BAZM-E-SATHI · SHAH FAISAL", 125, 55);
-    ctx.letterSpacing = "0px";
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "800 52px 'Fredoka', sans-serif";
-    ctx.fillText("SUMMER CAMP", 125, 110);
   } else {
-    ctx.fillStyle = "#fbbf24"; // yellow-400
-    ctx.font = "bold 14px 'Fredoka', sans-serif";
-    ctx.letterSpacing = "6px";
-    ctx.fillText("BAZM-E-SATHI · SHAH FAISAL", 50, 55);
-    ctx.letterSpacing = "0px";
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "800 52px 'Fredoka', sans-serif";
-    ctx.fillText("SUMMER CAMP", 50, 110);
+    // Fallback: Draw torch base (blue circle with star)
+    ctx.fillStyle = "#1e40af"; // dark blue
+    ctx.beginPath();
+    ctx.arc(torchX + 35, torchY + 35, 35, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw yellow star in center
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "36px serif";
+    ctx.textAlign = "center";
+    ctx.fillText("⭐", torchX + 35, torchY + 46);
+    
+    // Draw flame on top
+    ctx.font = "42px serif";
+    ctx.fillText("🔥", torchX + 35, torchY + 10);
   }
+  
+  ctx.textAlign = "start";
 
-  ctx.fillStyle = "#fbbf24";
-  ctx.font = "800 28px 'Fredoka', sans-serif";
-  ctx.fillText("2K26", 490, 110);
+  // Title text - Urdu (smaller, positioned better)
+  ctx.fillStyle = "#64748b"; // slate gray
+  ctx.font = "bold 13px 'Fredoka', sans-serif";
+  ctx.letterSpacing = "1.5px";
+  ctx.fillText("شاہیں کی طرح پرواز کر بلندی کا خواب دیکھ", 145, 70);
+  ctx.letterSpacing = "0px";
 
-  // --- Accent bar ---
-  const barGrad = ctx.createLinearGradient(50, 0, 350, 0);
-  barGrad.addColorStop(0, "#f97316"); // orange
-  barGrad.addColorStop(1, "#fbbf24"); // yellow
-  drawRoundedRect(ctx, 50, 130, 300, 6, 3);
-  ctx.fillStyle = barGrad;
-  ctx.fill();
+  // SUMMER CAMP title (large, professional)
+  ctx.fillStyle = "#1e3a8a"; // dark blue
+  ctx.font = "800 72px 'Fredoka', sans-serif";
+  ctx.fillText("SUMMER", 145, 145);
 
-  // --- ENTRY PASS label ---
-  ctx.fillStyle = "rgba(255,255,255,0.15)";
-  ctx.font = "800 80px 'Fredoka', sans-serif";
-  ctx.fillText("ENTRY PASS", 40, 480);
+  ctx.fillStyle = "#84cc16"; // lime green
+  ctx.font = "800 72px 'Fredoka', sans-serif";
+  ctx.fillText("CAMP", 460, 145); // Reduced gap from 500 to 460
 
-  // --- Camper details ---
+  // 2026 - positioned inline with better styling
+  ctx.fillStyle = "#1e3a8a"; // dark blue
+  ctx.font = "800 36px 'Fredoka', sans-serif";
+  ctx.fillText("2026", 145, 190);
+
+  // --- English Tagline (better positioned, single line) ---
+  ctx.fillStyle = "#84cc16"; // lime green
+  ctx.font = "italic 600 19px 'Fredoka', sans-serif";
+  ctx.fillText("Dare to Explore, Learn to Lead!", 145, 220);
+
+  // --- Camper details (professional registration card style) ---
   const labelStyle = () => {
-    ctx.fillStyle = "#7dd3fc"; // sky-300
-    ctx.font = "600 11px 'Fredoka', sans-serif";
+    ctx.fillStyle = "#84cc16"; // lime green
+    ctx.font = "700 12px 'Fredoka', sans-serif";
+    ctx.letterSpacing = "1px";
   };
   const valueStyle = () => {
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "700 22px 'Fredoka', sans-serif";
+    ctx.fillStyle = "#1e293b"; // dark slate
+    ctx.font = "700 24px 'Fredoka', sans-serif";
   };
 
-  // Row 1
-  labelStyle(); ctx.fillText("CAMPER NAME", 50, 175);
-  valueStyle(); ctx.fillText(data.childName.toUpperCase(), 50, 202);
+  // Separator line
+  ctx.strokeStyle = "rgba(132, 204, 22, 0.2)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(60, 260);
+  ctx.lineTo(760, 260);
+  ctx.stroke();
 
-  // Row 2 — two cols
-  labelStyle(); ctx.fillText("AGE", 50, 240);
-  valueStyle(); ctx.fillText(data.age + " Years", 50, 267);
+  // Row 1 - Camper Name (full width)
+  labelStyle(); 
+  ctx.fillText("CAMPER NAME", 60, 295);
+  ctx.letterSpacing = "0px";
+  valueStyle(); 
+  ctx.fillText(data.childName.toUpperCase(), 60, 325);
 
-  labelStyle(); ctx.fillText("GUARDIAN", 220, 240);
-  valueStyle(); ctx.fillText(data.parentName.toUpperCase(), 220, 267);
+  // Row 2 — two cols (Age and Guardian)
+  labelStyle(); 
+  ctx.fillText("AGE", 60, 375);
+  ctx.letterSpacing = "0px";
+  valueStyle(); 
+  ctx.fillText(data.age + " Years", 60, 405);
 
-  // Row 3 — two cols
-  labelStyle(); ctx.fillText("PHONE", 50, 305);
-  valueStyle(); ctx.fillText(data.phone, 50, 332);
+  labelStyle(); 
+  ctx.fillText("GUARDIAN", 320, 375);
+  ctx.letterSpacing = "0px";
+  valueStyle(); 
+  ctx.fillText(data.parentName.toUpperCase(), 320, 405);
 
-  labelStyle(); ctx.fillText("AREA", 320, 305);
-  valueStyle(); ctx.fillText(data.area.toUpperCase(), 320, 332);
+  // Row 3 — two cols (Phone and Area)
+  labelStyle(); 
+  ctx.fillText("PHONE", 60, 455);
+  ctx.letterSpacing = "0px";
+  valueStyle(); 
+  ctx.fillText(data.phone, 60, 485);
 
-  // Row 4 — schedule
-  labelStyle(); ctx.fillText("DAY 1 · JUNE 20, 2026", 50, 372);
-  ctx.fillStyle = "#e0f2fe";
-  ctx.font = "600 15px 'Fredoka', sans-serif";
-  ctx.fillText("Rose Garden & Fahad Lawn  ·  8 AM – 3 PM", 50, 394);
+  labelStyle(); 
+  ctx.fillText("AREA", 420, 455);
+  ctx.letterSpacing = "0px";
+  valueStyle(); 
+  ctx.fillText(data.area.toUpperCase(), 420, 485);
 
-  labelStyle(); ctx.fillText("DAY 2 · JUNE 21, 2026", 50, 425);
-  ctx.fillStyle = "#e0f2fe";
-  ctx.font = "600 15px 'Fredoka', sans-serif";
-  ctx.fillText("Farm House  ·  8 AM – 4 PM", 50, 447);
+  // --- Venue information at bottom (professional style) ---
+  ctx.fillStyle = "rgba(132, 204, 22, 0.08)"; // very light lime green
+  drawRoundedRect(ctx, 40, 525, 740, 50, 15);
+  ctx.fill();
+  
+  // Add border
+  ctx.strokeStyle = "rgba(132, 204, 22, 0.2)";
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, 40, 525, 740, 50, 15);
+  ctx.stroke();
+  
+  ctx.fillStyle = "#84cc16";
+  ctx.font = "bold 12px 'Fredoka', sans-serif";
+  ctx.fillText("📍 VENUE: Rose Garden & Fahad Lawn (Day 1) • Farm House (Day 2)", 60, 548);
+  
+  ctx.fillStyle = "#64748b";
+  ctx.font = "600 12px 'Fredoka', sans-serif";
+  ctx.fillText("⏰ 20-21 June 2026 • 8:00 AM onwards", 60, 565);
 
   // --- Right stub (Pass ID) ---
-  const stubX = W - 180;
+  const stubX = W - 200;
 
-  // Rotated "ENTRY PASS" on the stub
-  ctx.save();
-  ctx.translate(stubX + 90, H / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.font = "800 48px 'Fredoka', sans-serif";
+  // Draw torch on stub (top)
   ctx.textAlign = "center";
-  ctx.fillText("ENTRY", 0, -10);
-  ctx.restore();
+  
+  if (logoImg) {
+    // Draw the actual logo image on stub
+    ctx.save();
+    ctx.drawImage(logoImg, stubX + 65, 50, 70, 70);
+    ctx.restore();
+  } else {
+    // Fallback: Draw torch
+    ctx.fillStyle = "#1e40af";
+    ctx.beginPath();
+    ctx.arc(stubX + 100, 90, 32, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "32px serif";
+    ctx.fillText("⭐", stubX + 100, 102);
+    
+    ctx.font = "38px serif";
+    ctx.fillText("🔥", stubX + 100, 70);
+  }
 
-  // Pass ID
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#fbbf24";
-  ctx.font = "bold 11px 'Fredoka', sans-serif";
-  ctx.letterSpacing = "4px";
-  ctx.fillText("PASS ID", stubX + 90, 60);
-  ctx.letterSpacing = "0px";
-
-  ctx.fillStyle = "#ffffff";
+  // Summer Camp text on stub (professional style)
+  ctx.fillStyle = "#1e3a8a";
+  ctx.font = "800 22px 'Fredoka', sans-serif";
+  ctx.fillText("SUMMER", stubX + 100, 155);
+  
+  ctx.fillStyle = "#84cc16";
+  ctx.font = "800 22px 'Fredoka', sans-serif";
+  ctx.fillText("CAMP", stubX + 100, 180);
+  
+  ctx.fillStyle = "#1e293b";
   ctx.font = "800 18px 'Fredoka', sans-serif";
-  ctx.fillText(data.passId, stubX + 90, 88);
+  ctx.fillText("2026", stubX + 100, 202);
 
-  // Emoji badge
-  ctx.font = "60px serif";
-  ctx.fillText("🏕️", stubX + 90, 200);
-
-  // Camp year
-  ctx.fillStyle = "#fff";
-  ctx.font = "800 36px 'Fredoka', sans-serif";
-  ctx.fillText("2K26", stubX + 90, 300);
-
-  ctx.fillStyle = "#7dd3fc";
-  ctx.font = "600 12px 'Fredoka', sans-serif";
-  ctx.letterSpacing = "3px";
-  ctx.fillText("SUMMER", stubX + 90, 325);
+  // Pass ID section (professional style)
+  ctx.fillStyle = "#84cc16";
+  ctx.font = "bold 11px 'Fredoka', sans-serif";
+  ctx.letterSpacing = "2px";
+  ctx.fillText("PASS ID", stubX + 100, 235);
   ctx.letterSpacing = "0px";
 
-  // Barcode-like decoration
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  for (let i = 0; i < 20; i++) {
-    const bw = i % 3 === 0 ? 4 : 2;
-    ctx.fillRect(stubX + 30 + i * 7, H - 80, bw, 35);
+  ctx.fillStyle = "#1e293b";
+  ctx.font = "800 14px 'Fredoka', sans-serif";
+  ctx.fillText(data.passId, stubX + 100, 255);
+
+  // QR Code (larger size with border)
+  if (qrImg) {
+    ctx.save();
+    // White background with border for QR
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(stubX + 40, 275, 120, 120);
+    
+    // Border
+    ctx.strokeStyle = "rgba(30, 41, 59, 0.1)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(stubX + 40, 275, 120, 120);
+    
+    // Draw QR code
+    ctx.drawImage(qrImg, stubX + 45, 280, 110, 110);
+    ctx.restore();
+  } else {
+    // QR Code placeholder if image fails to load
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(stubX + 45, 280, 110, 110);
+  }
+  
+  // QR Code label (professional style)
+  ctx.fillStyle = "#84cc16";
+  ctx.font = "bold 10px 'Fredoka', sans-serif";
+  ctx.letterSpacing = "1px";
+  ctx.fillText("SCAN FOR", stubX + 100, 415);
+  ctx.fillText("WEBSITE", stubX + 100, 430);
+  ctx.letterSpacing = "0px";
+
+  // Decorative dots on stub (3x3 grid) - professional style
+  ctx.fillStyle = "rgba(132, 204, 22, 0.25)";
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      ctx.beginPath();
+      ctx.arc(stubX + 75 + col * 18, 460 + row * 18, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Barcode-like decoration at bottom (professional style)
+  ctx.fillStyle = "rgba(30, 41, 59, 0.12)";
+  for (let i = 0; i < 28; i++) {
+    const bw = i % 3 === 0 ? 3 : 2;
+    const bh = i % 2 === 0 ? 38 : 32;
+    ctx.fillRect(stubX + 35 + i * 6, H - 65, bw, bh);
   }
 
   ctx.textAlign = "start";
@@ -217,23 +352,30 @@ const EntryPass: React.FC<EntryPassProps> = (props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [passId] = useState(generatePassId);
   const [logo, setLogo] = useState<HTMLImageElement | null | undefined>(null);
+  const [qrCode, setQrCode] = useState<HTMLImageElement | null | undefined>(null);
 
   useEffect(() => {
     const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = "https://live.staticflickr.com/7156/6674386563_04f4f4a9ae_b.jpg";
+    img.src = "/logo.png";
     img.onload = () => setLogo(img);
-    img.onerror = () => setLogo(undefined); // If it fails, we still render without it
+    img.onerror = () => setLogo(undefined);
   }, []);
 
   useEffect(() => {
-    if (canvasRef.current && logo !== null) {
+    const qr = new Image();
+    qr.src = "/qrcode_348894120_e09e7acbbc4f709fe6887e73935fd0ad.png";
+    qr.onload = () => setQrCode(qr);
+    qr.onerror = () => setQrCode(undefined);
+  }, []);
+
+  useEffect(() => {
+    if (canvasRef.current && logo !== null && qrCode !== null) {
       // Load Fredoka font before drawing
       document.fonts.ready.then(() => {
-        drawPass(canvasRef.current!, { ...props, passId }, logo);
+        drawPass(canvasRef.current!, { ...props, passId }, logo, qrCode);
       });
     }
-  }, [props, passId, logo]);
+  }, [props, passId, logo, qrCode]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
@@ -272,44 +414,44 @@ const EntryPass: React.FC<EntryPassProps> = (props) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white p-8 md:p-12 rounded-[3rem] text-center shadow-2xl border-4 border-sky-100"
+      className="bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] text-center shadow-2xl border-2 sm:border-4 border-sky-100"
     >
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-        <span className="text-4xl">🎉</span>
+      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+        <span className="text-3xl sm:text-4xl">🎉</span>
       </div>
-      <h3 className="text-3xl font-playful font-black text-sky-900 mb-2 uppercase">
+      <h3 className="text-2xl sm:text-3xl font-playful font-black text-sky-900 mb-2 uppercase">
         Registration Successful!
       </h3>
-      <p className="text-sky-600 font-bold text-lg mb-8">
+      <p className="text-sky-600 font-bold text-base sm:text-lg mb-6 sm:mb-8">
         Your entry pass has been generated. Download it below!
       </p>
 
       {/* Pass preview */}
-      <div className="overflow-x-auto pb-4 mb-8">
+      <div className="overflow-x-auto pb-4 mb-6 sm:mb-8">
         <canvas
           ref={canvasRef}
-          className="mx-auto rounded-2xl shadow-xl"
+          className="mx-auto rounded-xl sm:rounded-2xl shadow-xl"
           style={{ maxWidth: "100%", height: "auto" }}
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleDownload}
-          className="inline-flex items-center justify-center gap-3 bg-orange-500 text-white px-10 py-5 rounded-2xl text-xl font-playful font-black uppercase tracking-widest shadow-[0_8px_0_rgb(194,65,12)] hover:bg-orange-400 active:translate-y-1 active:shadow-none transition-all"
+          className="inline-flex items-center justify-center gap-2 sm:gap-3 bg-orange-500 text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 rounded-xl sm:rounded-2xl text-base sm:text-lg md:text-xl font-playful font-black uppercase tracking-widest shadow-[0_6px_0_rgb(194,65,12)] sm:shadow-[0_8px_0_rgb(194,65,12)] hover:bg-orange-400 active:translate-y-1 active:shadow-none transition-all"
         >
-          <Download className="w-6 h-6" />
+          <Download className="w-5 h-5 sm:w-6 sm:h-6" />
           Download Pass
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={props.onRegisterAnother}
-          className="inline-flex items-center justify-center gap-3 bg-sky-100 text-sky-700 px-10 py-5 rounded-2xl text-lg font-playful font-black uppercase tracking-widest hover:bg-sky-200 transition-all"
+          className="inline-flex items-center justify-center gap-2 sm:gap-3 bg-sky-100 text-sky-700 px-6 sm:px-8 md:px-10 py-4 sm:py-5 rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-lg font-playful font-black uppercase tracking-widest hover:bg-sky-200 transition-all"
         >
-          <RotateCcw className="w-5 h-5" />
+          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
           Register Another
         </motion.button>
       </div>
